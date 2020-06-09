@@ -230,6 +230,7 @@ class Manager():
             self.switch(self.quick_ring[0])
             self.app.sleep()
         watch.display.poweroff()
+        watch.touch.sleep()
         self._charging = watch.battery.charging()
         self.sleep_at = None
 
@@ -239,9 +240,9 @@ class Manager():
         watch.display.poweron()
         self.app.wake()
         watch.backlight.set(self._brightness)
-
+        watch.touch.wake()
         # Discard any pending touch events
-        _ = watch.touch.get_event()
+        watch.touch.reset_touch_data()
 
         self.keep_awake()
 
@@ -275,6 +276,7 @@ class Manager():
                 self.navigate(event[0])
         elif event[0] == 5 and self.event_mask & EventMask.TOUCH:
             self.app.touch(event)
+        watch.touch.reset_touch_data()
 
     def _tick(self):
         """Handle the system tick.
