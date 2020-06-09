@@ -13,15 +13,83 @@ def print_exception(exc, file=sys.stdout):
 sys.print_exception = print_exception
 
 import draw565
+import array
 
 from machine import I2C
 from machine import Pin
 from machine import SPI
 
-from drivers.cst816s import CST816S
 from drivers.st7789 import ST7789_SPI
 from drivers.vibrator import Vibrator
 
+class simCST816S(object):
+    """Simulate touch screen function on simulator.
+
+    This class for simulate touch screen driver to match used in wasp.py
+    because the simulator doesn't support interrupt handler    
+    """
+    
+    def __init__(self, bus):
+        """Specify the bus used by the touch controller.
+
+        :param machine.I2C bus: I2C bus for the simCST816S.
+        """
+        self.i2c = bus
+        self.dbuf = bytearray(6)
+        self.event = array.array('H', (0, 0, 0))
+
+    def get_event(self):
+        """Receive a touch event.
+
+        Check for a pending touch event and, if an event is pending,
+        prepare it ready to go in the event queue.
+
+        :return: An event record if an event is received, None otherwise.
+        """
+        dbuf = self.dbuf
+        event = self.event
+
+        # TODO: check the interrupt pin
+
+        try:
+            self.i2c.readfrom_mem_into(21, 1, dbuf)
+        except OSError:
+            return None
+
+        # Skip junk events
+        if dbuf[0] == 0:
+            return None
+
+        x = ((dbuf[2] & 0xf) << 8) + dbuf[3]
+        y = ((dbuf[4] & 0xf) << 8) + dbuf[5]
+        swipe_start = dbuf[2] & 0x80
+        
+        # Skip identical events... when the I2C interface comes alive
+        # we can still get back stale events
+        if dbuf[0] == event[0] and x == event[1] and y == event[2] \
+                and not swipe_start:
+            return None
+
+        # This is a good event, lets save it
+        event[0] = dbuf[0]
+        event[1] = x
+        event[2] = y
+
+        # Do not forward swipe start events
+        if dbuf[2] & 0x80:
+            event[0] = 0
+            return None
+
+        return event
+
+    def sleep(self):
+        pass
+
+    def wake(self):
+        pass
+
+    def reset_touch_data(self):
+        self.dbuf[0] = 0
 
 class Backlight(object):
     def __init__(self, level=1):
@@ -108,6 +176,6 @@ drawable = draw565.Draw565(display)
 battery = Battery()
 button = Pin('BUTTON', Pin.IN, quiet=True)
 rtc = RTC()
-touch = CST816S(I2C(0))
+touch = simCST816S(I2C(0))
 vibrator = Vibrator(Pin('MOTOR', Pin.OUT, value=0), active_low=True)
 

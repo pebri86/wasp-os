@@ -61,11 +61,10 @@ drawable = draw565.Draw565(display)
 # Setup the last few bits and pieces
 battery = Battery(
         Pin('BATTERY', Pin.IN),
-        Signal(Pin('CHARGING', Pin.IN), invert=True),
         Signal(Pin('USB_PWR', Pin.IN), invert=True))
 button = Pin('BUTTON', Pin.IN)
 i2c = I2C(1, scl='I2C_SCL', sda='I2C_SDA')
-touch = CST816S(i2c, Pin('TP_RST', Pin.OUT, value=0), Pin('TP_RST', Pin.IN))
+touch = CST816S(i2c, Pin('TP_INT', Pin.IN), Pin('TP_RST', Pin.OUT, value=0))
 vibrator = Vibrator(Pin('MOTOR', Pin.OUT, value=0), active_low=True)
 
 # Release flash from deep power-down
@@ -84,7 +83,11 @@ except AttributeError:
     os.mount(flash,'/flash')
     with open('/flash/main.py', 'w') as f:
         f.write('''\
-#include('main.py')
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# Copyright (C) 2020 Daniel Thompson
+
+import wasp
+wasp.system.run()
 ''')
 
 # Only change directory if the button is not pressed (this will
