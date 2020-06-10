@@ -24,14 +24,12 @@ from drivers.vibrator import Vibrator
 
 class simCST816S(object):
     """Simulate touch screen function on simulator.
-
     This class for simulate touch screen driver to match used in wasp.py
     because the simulator doesn't support interrupt handler    
     """
-    
+
     def __init__(self, bus):
         """Specify the bus used by the touch controller.
-
         :param machine.I2C bus: I2C bus for the simCST816S.
         """
         self.i2c = bus
@@ -40,10 +38,8 @@ class simCST816S(object):
 
     def get_event(self):
         """Receive a touch event.
-
         Check for a pending touch event and, if an event is pending,
         prepare it ready to go in the event queue.
-
         :return: An event record if an event is received, None otherwise.
         """
         dbuf = self.dbuf
@@ -90,6 +86,29 @@ class simCST816S(object):
 
     def reset_touch_data(self):
         self.dbuf[0] = 0
+        
+class Accelerometer:
+    """Simulated accelerometer.
+
+    Accelerometers such as BMA421 are complex and most of the driver
+    is written in C. For that reason we simulate the accelerometer
+    rather than emulate (by comparison we emulate the ST7789).
+    """
+    def reset(self):
+        self._steps = 3
+
+    @property
+    def steps(self):
+        """Report the number of steps counted."""
+        if self._steps < 10000:
+            self._steps = int(self._steps * 1.34)
+        else:
+            self._steps += 1
+        return self._steps
+
+    @steps.setter
+    def steps(self, value):
+        self.reset()
 
 class Backlight(object):
     def __init__(self, level=1):
@@ -173,6 +192,7 @@ display = ST7789_SPI(240, 240, spi,
         res=Pin("DISP_RST", Pin.OUT, quiet=True))
 drawable = draw565.Draw565(display)
 
+accel = Accelerometer()
 battery = Battery()
 button = Pin('BUTTON', Pin.IN, quiet=True)
 rtc = RTC()
