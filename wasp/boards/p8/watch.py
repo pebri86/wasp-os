@@ -18,6 +18,7 @@ from machine import Pin
 from machine import SPI
 
 from drivers.battery import Battery
+from drivers.bma421 import BMA421
 from drivers.cst816s import CST816S
 from drivers.signal import Signal
 from drivers.st7789 import ST7789_SPI
@@ -64,6 +65,7 @@ battery = Battery(
         Signal(Pin('USB_PWR', Pin.IN), invert=True))
 button = Pin('BUTTON', Pin.IN)
 i2c = I2C(1, scl='I2C_SCL', sda='I2C_SDA')
+accel = BMA421(i2c)
 touch = CST816S(i2c, Pin('TP_INT', Pin.IN), Pin('TP_RST', Pin.OUT, value=0))
 vibrator = Vibrator(Pin('MOTOR', Pin.OUT, value=0), active_low=True)
 
