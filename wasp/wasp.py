@@ -243,8 +243,6 @@ class Manager():
         self.app.wake()
         watch.backlight.set(self._brightness)
         watch.touch.wake()
-        # Discard any pending touch events
-        watch.touch.reset_touch_data()
 
         self.keep_awake()
 

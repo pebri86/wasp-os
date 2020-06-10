@@ -43,16 +43,16 @@ class CST816S:
         prepare it ready to go in the event queue.
         """
         dbuf = self.dbuf
+        event = self.event
 
         try:
             self.i2c.readfrom_mem_into(21, 1, dbuf)
         except OSError:
-            return None
+            event[0] = 0
 
-        # This is a good event, lets save it
-        self.event[0] = dbuf[0] # event
-        self.event[1] = ((dbuf[2] & 0xf) << 8) + dbuf[3] # x coord
-        self.event[2] = ((dbuf[4] & 0xf) << 8) + dbuf[5] # y coord
+        event[0] = dbuf[0] # event
+        event[1] = ((dbuf[2] & 0xf) << 8) + dbuf[3] # x coord
+        event[2] = ((dbuf[4] & 0xf) << 8) + dbuf[5] # y coord
 
     def get_event(self):
         """Receive a touch event.
@@ -93,3 +93,4 @@ class CST816S:
         dbuf = bytearray([0xA5, 0x03])
         self.i2c.writeto(21, dbuf)
         self.touch_en = False
+        self.event[0] = 0
