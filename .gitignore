@@ -2,6 +2,9 @@
 *.zip
 .*.swp
 __pycache__
+cscope.out
 docs/build
 attic/
 wasp/boards/pinetime/watch.py
+wasp/boards/p8/watch.py
+.vscode/
