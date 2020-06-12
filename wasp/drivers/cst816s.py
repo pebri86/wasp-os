@@ -15,17 +15,16 @@ class CST816S:
     .. automethod:: __init__
     """
     
-    def __init__(self, bus, _int, _rst):
+    def __init__(self, bus, intr, rst):
         """Specify the bus used by the touch controller.
 
         :param machine.I2C bus: I2C bus for the CST816S.
         """
         self.i2c = bus
-        self.tp_int = _int  
-        self.tp_rst = _rst
+        self.tp_int = intr  
+        self.tp_rst = rst
         self.dbuf = bytearray(6)
         self.event = array.array('H', (0, 0, 0))
-        self.touch_en = True
 
         self._reset()
         self.tp_int.irq(trigger=Pin.IRQ_FALLING, handler=self.get_touch_data)
@@ -65,9 +64,6 @@ class CST816S:
         if self.event[0] == 0:
             return None
 
-        if not self.touch_en:
-            return None
-
         return self.event
 
     def reset_touch_data(self):
@@ -83,14 +79,14 @@ class CST816S:
         Just reset the chip in order to wake it up
         """
         self._reset()
-        self.touch_en = True
 
     def sleep(self):
         """Put touch controller chip on sleep mode to save power.
         """
+        # Before we can sent the sleep command we have to reset the
+        # panel to get the I2C hardware running again...
         self._reset()
-        # send 0x03 to register 0xA5 to put the controller on sleep mode
-        dbuf = bytearray([0xA5, 0x03])
-        self.i2c.writeto(21, dbuf)
-        self.touch_en = False
+        self.i2c.writeto_mem(21, 0xa5, b'\x03')
+
+        # Ensure get_event() cannot return anything
         self.event[0] = 0

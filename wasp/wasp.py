@@ -105,6 +105,7 @@ class Manager():
         self._brightness = 2
         self._button = PinHandler(watch.button)
         self._charging = True
+        self._watch_lift_wake = True
 
         # TODO: Eventually these should move to main.py
         self.register(ClockApp(), True)
@@ -134,6 +135,15 @@ class Manager():
     def brightness(self, value):
         self._brightness = value
         watch.backlight.set(self._brightness)
+
+    @property
+    def wake_lift(self):
+        """Cached copy of the wake_lift current written to the hardware."""
+        return self._watch_lift_wake
+
+    @wake_lift.setter
+    def wake_lift(self, value):
+        self._watch_lift_wake = value
 
     def switch(self, app):
         """Switch to the requested application.
@@ -316,6 +326,9 @@ class Manager():
             if 1 == self._button.get_event() or \
                     self._charging != watch.battery.charging():
                 self.wake()
+            elif self._watch_lift_wake:
+                if watch.accel.get_event() == True:
+                    self.wake()
 
     def run(self, no_except=True):
         """Run the system manager synchronously.
